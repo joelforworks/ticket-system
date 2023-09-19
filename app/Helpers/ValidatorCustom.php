@@ -6,9 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use App\Exceptions\ValidationException;
+use Illuminate\Validation\Rules\Enum;
+use App\Enums\TicketStatus;
+use App\Enums\TicketPriority;
 use App\Models\User;
 use App\Models\Category;
-use Illuminate\Support\Facades\DB;
+use App\Models\Label;
+use App\Models\Ticket;
 
 class ValidatorCustom {
 
@@ -128,7 +132,7 @@ class ValidatorCustom {
 		$category->update($data);
 	}
 	/**
-	 * Validate label
+	 * Validate label data
 	 *
 	 * @return ValidationException | category data
 	 */
@@ -157,5 +161,126 @@ class ValidatorCustom {
 
 		return $data;
 	}
+	/**
+	 * Validate label exists
+	 *
+	 * @return ValidationException | category data
+	 */
+	public function validateLabel(){
+		// find label
+		$label = Label::find($this->request->id);
+		if(!$label){
+			throw new ValidationException(['Label not found.']);
+		}
+	}
+	/**
+	 * Validate ticket store data
+	 *
+	 * @return validated data
+	 */
+	public function validateStoreTicketData(){
+		$errors=[];
+		// data we want
+		$data = $this->request->only([
+			'title',
+			'description',
+			'priority',
+			'status',
+			'files',
+			'agent_id',
+			'categories',
+			'labels',
+		]);
+		// rules
+		$rules=[
+			'title'=>'required|string',
+			'description'=>'required|string',
+			'priority'=>[new Enum(TicketPriority::class)],
+			'status'=>[new Enum(TicketStatus::class)],
+			'files' => 'nullable|array',
+			'agent_id' => 'required|numeric',
+			'categories'=>'nullable|array',
+			'labels'=>'nullable|array',
+		];
+		// find agent
+		$agent  = User::find($this->request->agent_id);
+
+		if(!$agent || $agent->role != 'agent'){
+			array_push($errors,["agent_id"=>["Agent not found."]]);
+		}
+
+		// validate
+		$validator = Validator::make($data,$rules);
+		if($validator->fails()){
+			array_push($errors,$validator->errors());
+		}
+		// send errors
+		if($errors){
+			throw new ValidationException($errors);
+		}
+		return $data;
+	}
+	/**
+	* Validate ticket
+  *
+	* @return ValidationException | Ticket
+	*/
+	public function validateTicket(){
+		// find ticket
+		$ticket = Ticket::find($this->request->id);
+		if(!$ticket){
+			throw new ValidationException(["Ticket not found."]);
+		}
+
+		return $ticket;
+	}
+	/**
+	* Validate ticket
+  *
+	* @return ValidationException | Ticket
+	*/
+	public function validateUpdateTicketData(){
+		$errors=[];
+		// data we want
+		$data = $this->request->only([
+			'title',
+			'description',
+			'priority',
+			'status',
+			'files',
+			'agent_id',
+			'categories',
+			'labels',
+		]);
+		// rules
+		$rules=[
+			'title'=>'string',
+			'description'=>'string',
+			'priority'=>[new Enum(TicketPriority::class)],
+			'status'=>[new Enum(TicketStatus::class)],
+			'files' => 'array',
+			'agent_id' => 'numeric',
+			'categories'=>'array',
+			'labels'=>'array',
+		];
+		// find agent
+		$agent  = User::find($this->request->agent_id);
+
+		if(!$agent || $agent->role != 'agent'){
+			array_push($errors,["agent_id"=>["Agent not found."]]);
+		}
+
+		// validate
+		$validator = Validator::make($data,$rules);
+		if($validator->fails()){
+			array_push($errors,$validator->errors());
+		}
+		// send errors
+		if($errors){
+			throw new ValidationException($errors);
+		}
+		return $data;
+	}
+
 
 }

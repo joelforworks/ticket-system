@@ -17,4 +17,9 @@ class Label extends Model
         'name',
         'color',
     ];
+    /**
+     * Hidden attributes
+     * 
+     */
+    protected $hidden = ['created_at', 'updated_at'];
 }

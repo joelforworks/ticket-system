@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LabelController;
+use App\Http\Controllers\TicketController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,8 +71,19 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     
 
     // TICKET
-    // CREATE TICKETS
     Route::middleware(['role:admin,user,agent'])->group(function () {
+        // CREATE TICKETS
+        Route::post('ticket', [TicketController::class, 'create']);
+        // SHOW ALL TICKETS
+        Route::get('ticket', [TicketController::class, 'show']);
+        // FIND TICKETS
+        Route::get('ticket/{id}', [TicketController::class, 'find']);
+    });
+    Route::middleware(['role:admin,agent'])->group(function () {
+        // UPDATE TICKETS
+        Route::put('ticket/{id}', [TicketController::class, 'update']);
+        // DELETE TICKETS
+        Route::delete('ticket/{id}', [TicketController::class, 'delete']);
     });
 
 
@@ -79,6 +91,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     // ADMIN 
     Route::middleware(['role:admin'])->group(function () {
         // CREATE AGENT
+        Route::post('register/agent',[AuthController::class,'registerAgent']);
+
     });
     // USER
     Route::middleware(['role:user'])->group(function () {
